@@ -6,7 +6,7 @@ block content
         nav.nav.container
             h1.text-display-3 KindeAuth
             .profile-blob
-                .avatar #{user.given_name[0]}#{user.given_name[1]}
+                .avatar #{user.given_name[0]}#{user.family_name[0]}
                 div
                     p.text-heading-2 #{user.given_name} #{user.family_name}
                     a.text-subtle(href='/logout') Sign out
@@ -18,3 +18,28 @@ block content
                 p.text-display-2 Build the important stuff.
             section.next-steps-section
                 h2.text-heading-1 Next steps for you
+            
+            // Add test buttons
+            .card.test-section
+                h2.text-heading-2 Test Functionality
+                a.btn.btn-light#verify-jwt-btn(href='#') Test JWT Verification
+                p#jwt-result
+
+    script.
+        document.getElementById('verify-jwt-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                const response = await fetch('/verify-jwt', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('kindeAccessToken')
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('JWT verification failed');
+                }
+                const result = await response.json();
+                document.getElementById('jwt-result').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('jwt-result').textContent = 'Error: ' + error.message;
+            }
+        });
