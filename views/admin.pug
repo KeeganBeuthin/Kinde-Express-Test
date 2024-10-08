@@ -41,13 +41,28 @@ block content
         document.getElementById('test-protected-btn').addEventListener('click', async () => {
             try {
                 const response = await fetch('/test-protected');
-                if (response.status === 403) {
-                    throw new Error('Access forbidden. You may not be authenticated.');
+                if (!response.ok) {
+                    throw new Error('HTTP status ' + response.status);
                 }
-                const data = await response.json();
-                document.getElementById('test-result').textContent = JSON.stringify(data, null, 2);
+                return response.json();
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('test-result').textContent = 'Error: ' + error.message;
             }
         });
+
+        fetch('/test-protected')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('HTTP status ' + response.status);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Protected route response:', data);
+            document.getElementById('test-result').textContent = JSON.stringify(data, null, 2);
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('test-result').textContent = 'Error: ' + error.message;
+          });

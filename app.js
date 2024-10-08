@@ -20,7 +20,7 @@ const config = {
   scope: "openid profile email",
 };
 
-const verifier = jwtVerify(config.issuerBaseUrl, {});
+const verifier = jwtVerify(config.issuerBaseUrl, config);
 
 console.log("Kinde config:", config);
 
@@ -39,6 +39,7 @@ app.get("/", async (req, res) => {
 });
 
 app.get("/admin", protectRoute, getUser, (req, res) => {
+  console.log(req.user)
   res.render("admin", {
     title: "Admin",
     user: req.user,
@@ -46,24 +47,18 @@ app.get("/admin", protectRoute, getUser, (req, res) => {
 });
 
 // Add a test route that requires authentication
-app.get("/test-protected", (req, res, next) => {
-  console.log("Headers:", req.headers);
-  console.log("Session access_token:", req.session.access_token ? 'Present' : 'Not present');
-  
-  // Manually set the Authorization header if it's not present
-  if (!req.headers.authorization && req.session.access_token) {
-    req.headers.authorization = `Bearer ${req.session.access_token}`;
-  }
-
-  verifier(req, res, (err) => {
-    if (err) {
-      console.error("JWT verification error:", err);
-      return res.status(403).json({ error: err.message });
-    }
-    console.log("JWT verified successfully");
-    console.log("User:", req.user);
-    res.json({ message: "Access granted", userId: req.user?.id });
-  });
+app.get("/test-protected", protectRoute, getUser, verifier,(req, res) => {
+  console.log("Accessed /test-protected route");
+  console.log("User:", req.user);
+  console.log(req)
+  // if (req.user && req.user.id) {
+  //   res.json({ 
+  //     message: "Access granted", 
+  //     userId: req.user.id 
+  //   });
+  // } else {
+  //   res.status(500).json({ error: "User ID not found after verification" });
+  // }
 });
 
 // Add an unauthorized route
@@ -77,12 +72,17 @@ app.get("/unauthorised", (req, res) => {
 // Add a route to check the current authentication status
 app.get("/auth-status", (req, res) => {
   console.log("Checking auth status");
+  
   console.log("Session:", req.session);
   console.log("User:", req.user);
   res.json({ 
-    isAuthenticated: req.session?.kindeAccessToken ? true : false,
-    sessionData: req.session,
-    userData: req.user
+    isAuthenticated: !!req.session?.access_token,
+    sessionData: {
+      access_token: req.session?.access_token ? 'Present' : 'Not present',
+      id_token: req.session?.id_token ? 'Present' : 'Not present'
+    },
+    userData: req.user || 'No user data available',
+    headers: req.headers
   });
 });
 
