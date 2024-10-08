@@ -19,27 +19,35 @@ block content
             section.next-steps-section
                 h2.text-heading-1 Next steps for you
             
-            // Add test buttons
+            // Replace the old test section with the new buttons
             .card.test-section
                 h2.text-heading-2 Test Functionality
-                a.btn.btn-light#verify-jwt-btn(href='#') Test JWT Verification
-                p#jwt-result
+                button.btn.btn-light#check-auth-btn Check Auth Status
+                button.btn.btn-light#test-protected-btn Test Protected Route
+                p#test-result
 
     script.
-        document.getElementById('verify-jwt-btn').addEventListener('click', async (e) => {
-            e.preventDefault();
+        document.getElementById('check-auth-btn').addEventListener('click', async () => {
             try {
-                const response = await fetch('/verify-jwt', {
-                    headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('kindeAccessToken')
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error('JWT verification failed');
-                }
-                const result = await response.json();
-                document.getElementById('jwt-result').textContent = JSON.stringify(result, null, 2);
+                const response = await fetch('/auth-status');
+                const data = await response.json();
+                document.getElementById('test-result').textContent = JSON.stringify(data, null, 2);
             } catch (error) {
-                document.getElementById('jwt-result').textContent = 'Error: ' + error.message;
+                console.error('Error:', error);
+                document.getElementById('test-result').textContent = 'Error: ' + error.message;
+            }
+        });
+
+        document.getElementById('test-protected-btn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/test-protected');
+                if (response.status === 403) {
+                    throw new Error('Access forbidden. You may not be authenticated.');
+                }
+                const data = await response.json();
+                document.getElementById('test-result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('test-result').textContent = 'Error: ' + error.message;
             }
         });
